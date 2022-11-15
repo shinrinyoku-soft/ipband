@@ -1,0 +1,93 @@
+USAGE
+
+This is how it works in our environment:
+
+We have, say, 20 subnets corresponding to 20 branches connected through frame relay to the main office. We add these network prefixes to /etc/ipband.conf to instruct ipband we are only interested in those subnets.
+Running ipband on foreground with -d 2 option allows to determine bandwidth threshold levels. In our environment the values are 10 kB/s for 56K frame circuits and 22 kB/s for 128K circuits. Anything higher than that would result in traffic congestion for that branch.
+
+We decide that exceeding these thresholds for less than 5 minutes is a temporary condition not worth our attention, so we set reporting period (also -r option) to 5 minutes (using default averaging time of 1 minute) and set bandwidth thresholds in the config file to the values determined earlier.
+
+When the threshold is exceeded for 1 minute, ipband starts logging all traffic for the subnet. If it's still high after 5 minutes (which means that branch is experiencing congestion for too long), a report (see OUTPUT section) with traffic breakdown is emailed to the specified address. It also gets appended to a file (also -o option) which is accessible through a web server.
+
+OUTPUT
+
+Sample Subnet Report:
+
+Date:   Mon Aug  6 11:04:37 2001
+Network: 10.10.123.0 <halifax>
+Showing top 20 connections
+Bandwidth threshold: 22.00 kBps, exceeded for: 5.00 min
+===============================================================================
+FROM            < PORT>     TO              < PORT>  PROT   KBYTES  SERVICE
+-------------------------------------------------------------------------------
+10.10.123.173   < 4359> <-> 10.100.11.13    <  143>  tcp   9145.89  imap2
+10.10.123.79    < 4318> <-> 128.10.11.200   <   23>  tcp     36.30  telnet
+10.10.123.254   < 1834> <-> 10.200.11.2     <  139>  tcp     16.47  netbios-ssn
+10.10.123.79    <  138> <-> 128.10.11.15    <  138>  udp      5.83  netbios-dgm
+10.10.123.254   < 1833> <-> 10.200.11.2     <  139>  tcp      3.64  netbios-ssn
+10.10.123.71    <  515> <-> 128.10.11.200   <  979>  tcp      3.36  printer
+10.10.123.69    <  515> <-> 128.10.11.200   <  789>  tcp      3.00  printer
+10.10.123.173   <    0> <-> 10.100.11.13    < 2048> icmp      2.96  
+10.10.123.78    <    0> <-> 10.100.11.13    < 2048> icmp      2.96  
+10.10.123.173   < 4366> <-> 10.100.11.13    <  143>  tcp      2.76  imap2
+10.10.123.79    < 4520> <-> 10.100.11.13    <  143>  tcp      2.75  imap2
+10.10.104.254   <  138> <-> 10.10.123.117   <  138>  udp      2.67  netbios-dgm
+10.10.24.254    <  138> <-> 10.10.123.117   <  138>  udp      2.67  netbios-dgm
+10.10.60.254    <  138> <-> 10.10.123.117   <  138>  udp      2.66  netbios-dgm
+10.10.123.117   <  138> <-> 128.10.11.15    <  138>  udp      2.65  netbios-dgm
+10.10.123.78    < 1325> <-> 10.100.11.13    <  143>  tcp      2.65  imap2
+10.10.123.254   <  138> <-> 10.10.124.73    <  138>  udp      2.64  netbios-dgm
+10.10.44.80     <  138> <-> 10.10.123.254   <  138>  udp      2.64  netbios-dgm
+10.10.44.75     <  138> <-> 10.10.123.254   <  138>  udp      2.64  netbios-dgm
+10.10.44.77     <  138> <-> 10.10.123.254   <  138>  udp      2.64  netbios-dgm
+===============================================================================
+
+Sample Subnet Summary with -d 2 option:
+(Output gives network number, number of bytes, calculated bandwidth used and specified threshold)
+
+ipband 0.3 (compiled Jul 11 2001)
+         libpcap version 0.4 
+
+Option values:
+    Debug level: 2 
+    Configuration file: ./ipband.conf 
+    Averaging period (sec): 60 
+    Reporting peroid (sec): 300 
+    Bandwidth threshold (kBps): 10 
+    Pcap filter string: net 10.10.0.0/16 
+    Subnet mask bits: 24 
+    Report output file: /dev/null 
+    Report mail to: (null) 
+    Report mail footer file: /etc/ipband.foot 
+    Report top connections: 20 
+
+Kernel filter, protocol ALL, raw packet socket 
+Interface (eth1) DataLinkType = DLT_EN10MB 
+
+ 10.10.2.0         25.63 kB     0.43/ 10.00 kBps
+ 10.10.18.0         5.82 kB     0.10/ 10.00 kBps
+ 10.10.122.0      237.23 kB     3.95/ 10.00 kBps
+ 10.10.44.0       239.94 kB     4.00/ 10.00 kBps
+ 60.0.10.0         36.53 kB     0.61/ 22.00 kBps
+ 10.10.14.0         9.08 kB     0.15/ 10.00 kBps
+ 10.10.1.0        400.98 kB     6.68/ 22.00 kBps
+ 10.10.53.0       106.25 kB     1.77/ 10.00 kBps
+ 10.10.43.0         4.35 kB     0.07/ 10.00 kBps
+ 10.10.81.0      1068.20 kB    17.80/ 22.00 kBps
+ 10.10.24.0       267.65 kB     4.46/ 22.00 kBps
+ 10.10.13.0         1.83 kB     0.03/ 10.00 kBps
+ 10.10.61.0       235.47 kB     3.92/ 10.00 kBps
+ 10.10.85.0       175.72 kB     2.93/ 22.00 kBps
+ 10.10.20.0       230.92 kB     3.85/ 22.00 kBps
+ 10.10.107.0      102.09 kB     1.70/ 10.00 kBps
+ 10.10.63.0        59.22 kB     0.99/ 10.00 kBps
+ 10.10.64.0         3.41 kB     0.06/ 10.00 kBps
+************************************************
+
+NOTES
+
+- Report mailing blocks until pipe to sendmail returns.
+
+- Network numbers in report will be resolved to names via getnetbyaddr() if present in /etc/networks
+
+- The -A option (or accumulate yes directive) is designed to work only with what I call "preloaded subnets". If you don't use "subnet x.x.x.x bandwidth x.x" option in the config file, it will behave as a pre-0.4.1 version and you will not see the total time line in the reports. The reason for this is memory and speed consideration. Ipband is working this way: We get a packet, take the source and destination IPs, apply subnet mask to both to get source and destination networks. Then we use these network numbers as keys in a hash table in which we accumulate byte counters and timers for those networks. Every averaging period cycle, we calculate bandwidth usage for the networks in the hash table. If bandwidth used exceeds threshold we flag this network as interesting and every packet to or from this network is added to another hash table to create detailed report later when reporting time comes. Now, if bandwidth doesn't exceed the threshold or drops below the threshold, the network data is *deleted* from the hash table and (if existed) all detailed traffic data also deleted. If we are using "preloaded subnets", these networks are preloaded in the hash table and only their traffic is processed, so the tables don't grow. This utility was written with WAN monitoring in mind when administrator knows which networks are being monitored so using pre-loaded subnets is reasonable and only this allows you to specify different thresholds for various subnets (which was basically our main requirement). If we didn't use preloaded subnets and our networks were accessing the Internet then, over time, hash tables would grow indefinitely which can be considered as memory leak (as we might not need this old info at all) and time to process these table would also increase.

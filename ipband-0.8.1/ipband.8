@@ -1,0 +1,237 @@
+.\" 
+.TH "ipband" "8" "Jun 13, 2008" "Andrew Nevynniy" ""
+.SH "NAME"
+ipband \- IP bandwidth watchdog
+.SH "SYNOPSIS"
+.BI ipband
+\-aAbcCdfFhJlLmMowPrtTv \fIINTERFACE\fR
+.sp
+
+.SH "DESCRIPTION"
+.B ipband
+is a pcap based IP traffic monitor.  It tallies per\-subnet traffic and bandwidth usage and starts detailed logging if specified threshold for the specific subnet is exceeded. If traffic has been high for a certain period of time, the report for that subnet is generated which can be appended to a file or e\-mailed. When bandwidth usage drops below the threshold, detailed logging for the subnet is stopped and memory is freed.
+
+This utility could be handy in a limited bandwidth WAN environment (frame relay, ISDN etc. circuits) to pinpoint offending traffic source if certain links become saturated to the point where legitimate packets start getting dropped.
+
+It also can be used to monitor internet connection when specifying the range of local ip addresses (to avoid firing reports about non\-local networks).
+
+Bandwidth is defined as total size in kBytes of the layer 2 frames with IP packets passing the specified interface during the avaraging period devided by the number of seconds in that period.
+.SH "COMMAND LINE OPTIONS"
+.TP 
+.B interface
+Network interface to read data from.  
+
+.TP 
+.B \-a \fIsecs\fR
+Averaging period in seconds. How often total traffic and bandwidth should be calculated. Default is 60 secs. 
+
+.TP 
+.B \-A
+Include threshold exceeded accumulated time and percentage in the report. This option works only with preloaded subnets ("subnet" directive) because otherwise subnet data is deleted when bandwidth usage drops below threshold to clear memory and reduce processing time. 
+
+.TP 
+.B "\-b \fIkBps\fR"
+Bandwidth threshold in kBytes per sec. Default is 7 kBps i.e. 56 kbps.
+
+.TP 
+.B "\-c \fIfilename\fR"
+Use \fIfilename\fR as configuration file. Default is /etc/ipband.conf. Specifying different bandwidth threshold per subnet is only available through the configuration file. See \fBsubnet\fR directive in the CONFIGURATION FILE section below.
+
+.TP 
+.B "\-C"
+Ignore configuration file.
+
+.TP 
+.B "\-d \fIlevel\fR"
+Debug level. 0 \- no debuging; 1 \- summary; 2 \- subnet statistics; 3 \- all packets captured. Default is 0.
+
+.TP 
+.B "\-f \fIfilterstr\fR"
+Use \fIfilterstr\fR as pcap filter. See manual page for tcpdump. Also see EXAMPLES section below.
+
+.TP 
+.B "\-F"
+Fork and run in background. Default is run in foreground.
+
+.TP 
+.B "\-h"
+Print help and exit.
+
+.TP 
+.B "\-J \fInumber\fR"
+Packet length adjustment in bytes. This option can be used when layer 2 frame sizes for the interface ipband is listening on and the interface we are measuring the bandwidth for are different. For example, if you are concerned about bandwidth usage on a router's frame relay interface with 6 bytes overhead (frame header + RFC1490 encapsulation) while ipband is running on an ethernet interface with 14 bytes MAC frame, then you could use value \-8 for this option to get more accurate bandwidth calculation. The \fInumber\fR can be a positive or a negative integer. Negative values should not exceed leyer 2 frame size for the ipband's interface (i.e. we can't use \-15 in the above example). The default is 0.
+
+.TP 
+.B "\-l \fIfilename\fR"
+If \-M (or \fBmailto\fR directive in config file) option is set, specifies name of the file to be appended to the end of e\-mail reports.
+
+.TP 
+.B "\-L \fIip\-range[:ip\-range[:ip\-range[..]]]\fR"
+This option specifies which network numbers should be considered local when collecting data and generating reports (actually non\-local networks are not logged at all). It can be used instead of config file's multiple "subnet" directives (unlike that directive, there would be a single bandwidth threshold specified by \-b option). This option can be used for monitoring internet connections when you don't want to get reports on someone else's networks.
+
+There can be many ip\-ranges separate by colons.  No spaces may appear in the argument.  Each ip\-range can be either a single ip address such as 192.168.1.1 which indicates a range of one, 
+a partial ip address such as 192.168.1.0 which indicates a range from 192.168.1.0 to 192.168.1.255, a low and high ip address separated by a hypen (\-), and a single ip address, a slash (/) and an integer between 0 and 32 (a "net address") which indicates a network. If you run ipband with the debug option (\-d) the program will print the entire list of ip ranges, so you can check their values.
+
+Here is a list of arguments to \-L along with the corresponding range.
+
+   COMMAND: \fBipband eth0 \-l 137.99.11\fR
+   RANGE:   137.99.11.0\-137.99.11.255
+
+   COMMAND: \fBipband eth0 \-L 137.99.11:127.0.5/23\fR
+   RANGE:   137.99.11.0\-137.99.11.255,127.0.4.0\-127.0.5.255
+
+   COMMAND: \fBipband eth0 \-L 127.1.5.17\-127.1.7.131\fR
+   RANGE:   127.1.5.17\-127.1.7.131
+
+
+.TP 
+.B "\-m \fImaskbits\fR"
+Set number of subnet mask bits (1\-32) for subnet traffic aggregation. Default is 24 (255.255.255.0).
+
+.TP 
+.B "\-M \fIemail address(es)\fR"
+Send detailed subnet report to specified e\-mail address(es). Multiple addresses must be separated by comma.
+
+.TP 
+.B "\-o \fIfilename\fR"
+Filename to output detailed subnet report. Default is ipband.txt in current directory.
+
+.TP 
+.B "\-w \fIfilename\fR"
+HTML report output file. Default is ipband.html in current directory. The styles.css file can be used in the same directory to customize its look and feel.
+
+.TP 
+.B "\-P"
+Do not use promiscuous mode on the network interface we are listening on.
+.TP 
+
+.B "\-r \fIsecs\fR"
+Reporting period \- number of seconds bandwidth threshold may be exceeded before it should be reported. Default is 300 seconds.
+
+.TP 
+.B "\-t \fInumber\fR"
+Limit subnet report to a given number of per\-host connections with highest byte count (top connections). Default is no limit.
+
+.TP 
+.B "\-T \fIstring\fR"
+MTA command string for mailing reports. Default is "/usr/sbin/sendmail \-t \-oi". The string is tokenized and passed directly to exec(), so that shell's metacharacters are not interpreted.
+
+.TP 
+.B "\-v"
+Print version and exit.
+.SH "CONFIGURATION FILE"
+In addition to command line options you can use a configuration file.  When \fBipband\fR starts it first looks for /etc/ipband.conf.  You can also give the '\-c' (see OPTIONS above) to specify a configuration file.
+
+The options in the config file are specified by keyword/value
+pairs. Lines starting with # are ignored.
+
+Below is a list of config file options:
+
+.TP 
+.B interface \fIinterface\fR
+Interface to read packets from.
+
+.TP 
+.B promisc \fI{yes/no}\fR
+Like \-P option, specifies whether or not to use promiscious mode on the listening network interface. Promiscuous mode is the default.
+
+.TP 
+.B debug \fI{0\-3}\fR
+Like \-d option, specifies debug level. 
+
+.TP 
+.B fork \fI{yes/no}\fR
+Like \-F option, specifies whether or not to run in background. Default is no.
+
+.TP 
+.B filter \fIfilterstr\fR
+Like \-f option, specifies pcap filter.
+
+.TP 
+.B outfile \fIfilename\fR
+Like \-o option, specifies report file name. efault is ipband.txt in current directory.
+
+.TP 
+.B htmlfile \fIfilename\fR
+Like \-w option, HTML report output file. Default is ipband.html in current directory. The styles.css file can be used in the same directory to customize its look and feel.
+
+.TP 
+.B htmltitle \fItitle\fR
+HTML title of the report output file.
+
+.TP 
+.B bandwidth \fIkBps\fR
+Like \-b option, bandwidth threshold in kBytes per second. Default is 7.0 kBps.
+
+.TP 
+.B average \fIsecs\fR
+Like \-a option, tells \fBipband\fR nomber of seconds to average per\-subnet traffic and calculate bandwidth usage. Default is 60 seconds.
+
+.TP 
+.B lenadj \fInumber\fR
+Like \-J option, specifies packet length adjustment in bytes. 
+
+.TP 
+.B report \fIsecs\fR
+Like \-r option, number of seconds specified threshold(s) may be exceeded before report is fired off. Default is 300 secs.
+
+.TP 
+.B top \fInumber\fR
+Like \-t option, limits subnet report to a given number of per\-host connections with highest byte count (top connections). Default is 0 \- no limit.
+
+.TP 
+.B accumulate \fI{yes/no}\fR
+Like \-A option, whether or not to include threshold exceeded accumulated time and percentage in the report. Default is no.
+
+.TP 
+.B mailto \fIemail address(es)\fR
+Like \-M option, e\-mail address(es) detailed subnet report should be sent to. Multiple addresses must be separated by comma.
+
+.TP 
+.B mailfoot \fIfilename\fR
+Like \-l option, name of the file to be appended to the end of e\-mail reports.
+
+.TP 
+.B mtastring \fIstring\fR
+Like \-T option, specifies MTA command string for mailing reports. Default is "/usr/sbin/sendmail \-t \-oi".
+
+.TP 
+.B maskbits \fI{1\-32}\fR
+Like \-m option, sets the number of network mask bits. Default is 24 (corresponding to subnet mask 255.255.255.0).
+
+.TP 
+.B localrange \fIip_range\fR
+Like \-L option, determines which range(s) of ip addresses are considered local.
+
+.TP 
+.B subnet \fIsubnet\-ip\fR \fBbandwidth\fR \fIkBps\fR
+Specifies which subnets \fBipband\fR should work with and sets individual bandwidth thresholds for them \- one subnet option per line (subnet mask is set by \fImaskbits\fR option). This option is only available through a configuration file. Setting it limits data collection and reporting to the specified subnets.
+.SH "EXAMPLES"
+.TP 
+.B  ipband eth0 \-f "net 10.10.0.0/16" \-m 24 \-a 300 \-r 900   
+
+Will capture packets from/to ip addresses matching 10.10.0.0/255.255.0.0, tally traffic by the third octet,calculate bandwidth utilization every 5 minutes and report per host traffic every 15 minutes.
+
+.TP 
+.B  ipband \-c ipband.conf
+
+Read configuration from file ipband.conf. 
+.SH "BUGS"
+.TP 
+Report mailing blocks until pipe to sendmail returns.
+
+.TP 
+.br 
+Thanks.
+
+.SH "AUTHOR"
+Andrew Nevynniy\fR
+.TP 
+ipband is based on ipaudit\-0.95 by J Rifkin \fIjon.rifkin@uconn.edu\fR (http://www.sp.uconn.edu/~jrifkin).
+
+.SH "VERSION"
+0.8.1 Jun 13, 2008
+
+.SH "SEE ALSO"
+.BR tcpdump (1)
+.BR pcap (3)

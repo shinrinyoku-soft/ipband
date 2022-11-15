@@ -1,0 +1,104 @@
+ipband 0.8.1	13 Jun 2008
+
+   Debian Bug report - #363407. Changed integer type to hold cumulative byte count from 
+   long to double to avoid counter overflow in reports.
+
+   Debian specific (Thanks to Giuseppe Iuculano):
+   No /usr/local/, man 8, no printf when runs in background, 
+   don't fail to build if strtok_r is defined as a macro and change default MTA command 
+   string for mailing reports.
+
+ipband 0.8	02 Oct 2006
+
+   A seg fault issue is resolved when a non tcp/udp protocol is encountered during
+   report generation. Thanks to Shane Denovan for providing the patch. 
+
+   Installation directories in Makefile can be specified using PREFIX, BINDIR, 
+   MANDIR, SYSCONFDIR and RCDIR environmental variables. Thanks to Enrico Weigelt.
+
+   Added "-w" option (and corresponding htmlfile and htmltitle directives) to allow
+   generation of HTML report. Thanks to SHOREWALL TimeLord for providing the patch.
+
+ipband 0.7.2	25 Mar 2002
+
+   Proper procedure is used to become daemon process.
+
+   Fixed a bug where a footer file descriptor was not closed (sic).
+
+ipband 0.7.1    20 Feb 2002
+   Fixed a bug where getopt() return value was interpreted as char and not
+   integer. This could have caused problems parsing command line options on
+   systems where char is signed by default.
+
+ipband 0.7	10 Jan 2002
+
+   Added "-T" option and "mtastring" directive to specify MTA command
+   string. The default is "/usr/sbin/sendmail -t -ba" and now can be
+   overridden for systems that use other mail transport agents for mailing
+   ipband reports.
+
+   As a result, for security reasons call to popen() has been replaced with 
+   a safer routine that parses the MTA string and uses exec() to start 
+   specified program thus avoiding shell expansions. If ipband is running
+   setuid/setgid, these privileges are dropped before exec() in the child process.
+
+   Also added "-J" option and corresponding "lenadj" directive to specify 
+   packet length adjustment. This can be used when layer 2 frame sizes for
+   the interface ipband is listening on and the interface we are measuring the
+   bandwidth for are different.
+
+   A bug in packet length calculation for non-ethernet interfaces has been fixed.
+   The bug was in the code inherited from ipaudit and resulted in a hard coded value
+   of 14 bytes (ethernet frame size) being added to each IP datagram regardless 
+   of the underlying interface. That caused higher bandwidth usage being repoted
+   for ppp and raw interfaces.
+
+   Source code is re-organized for easier future development.
+
+   Some minor changes in error handling routines.
+
+ipband 0.6	03 Oct 2001
+
+   Support for PPP and WAN (e.g. Sangoma cards) interfaces is added.
+
+ipband 0.5	26 Sep 2001
+
+   Added "-P" option and "promisc" directive to enable/disable the
+   use of promiscuous mode on the network interface. A tiny signed/unsigned
+   issue is also fixed in the packed content debug dump code. Thanks to
+   Nic Bellamy for providing the patch.
+
+   Also added "-L" option and "localrange" directive to specify a range
+   of network numbers that are considered local and therefore packets
+   belonging only to these networks are processed. This can be used
+   instead of multiple "subnet" directives in the config file.
+
+ipband 0.4.1	13 Sep 2001
+
+   Two bugs related to subnet mask calculation were fixed. One was preventing 
+   using zero as a number of mask bits and another one resulted in 32 bits
+   being miscalculated as netmask 0.0.0.0.
+
+ipband 0.4	12 Sep 2001
+
+   Option to include threshold exceeded accumulated time and percentage
+   in the report is added. This option works only with preloaded subnets
+   because otherwise subnet data is deleted when bandwidth usage
+   drops below threshold to clear memory and reduce processing time.
+
+ipband 0.31	31 Jul 2001
+
+   Added a couple of include's to compile on FreeBSD
+
+ipband 0.3	12 Jul 2001
+
+   'C' option added to ignore configuration file
+   Memory freeing when resetting default settings is now complete
+
+ipband 0.2	11 Jul 2001
+
+   Report mailing option added
+
+ipband 0.1 	04 Jun 2001
+
+   Initial Release

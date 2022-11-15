@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+# ipband	This shell script takes care of starting and stopping
+#		ipband.
+#
+# chkconfig: - 85 15
+# description: ip bandwidth watchdog
+
+# Source function library.
+. /etc/init.d/functions
+
+[ -f /etc/ipband.conf ] || exit 0
+
+RETVAL=0
+prog="ipband"
+
+start() {
+        echo -n $"Starting $prog: "
+        daemon /usr/local/bin/ipband 
+	RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/ipband
+	return $RETVAL
+}
+
+stop() {
+        echo -n $"Shutting down $prog: "
+	killproc ipband
+	RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/ipband
+	return $RETVAL
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+        ;;
+  stop)
+	stop
+        ;;
+  status)
+	status ipband
+	RETVAL=$?
+	;;
+  restart|reload)
+	stop
+	start
+	RETVAL=$?
+	;;
+  *)
+        echo $"Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
+

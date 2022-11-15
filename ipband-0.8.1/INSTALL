@@ -1,0 +1,18 @@
+IPBAND
+======
+
+
+Requirements
+============
+
+- Libpcap (http://www-nrg.ee.lbl.gov/nrg.html)
+
+IPBAND was developed and tested on i386 system running Red Hat 7.1.
+It was also successfully compiled and tested on FreeBSD (4.3-RELEASE)
+and OpenBSD 2.9.
+
+
+Basic Installation
+==================
+
+Modify Makefile if needed. Do `make` followed by `make install`.
