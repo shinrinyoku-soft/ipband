@@ -13,8 +13,9 @@ specified threshold for the specific subnet is exceeded.
 Suggested Usage
 ===============
 The utility could be handy in a limited  bandwidth WAN
-environment  to pinpoint offending traffic sources if certain links become saturated
-to the point where legitimate traffic starts getting dropped.
+environment  to pinpoint offending traffic sources if certain 
+links become saturated to the point where legitimate traffic 
+starts getting dropped.
 
 It also can be used to monitor internet connection when
 specifying the range of local IP addresses.
